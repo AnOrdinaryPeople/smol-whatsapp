@@ -21,6 +21,7 @@ pub fn run() {
     let unread_icon = Some(Image::from_bytes(include_bytes!("../icons/unread.png")).unwrap());
 
     Builder::default()
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
             focus_main_window(app);
         }))

@@ -19,7 +19,16 @@
       "csp": null
     }
   },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEI2Mzk4NkQ3QUMyN0ZCM0MKUldROCt5ZXMxNFk1dG9zWjMxbzlPVWxDTUpQUFpHUjVNTFBRZUsyUmRVYkNMTGtjZjA1SGJRaXcK",
+      "endpoints": [
+        "https://github.com/AnOrdinaryPeople/smol-whatsapp/releases/latest/download/latest.json"
+      ]
+    }
+  },
   "bundle": {
+    "createUpdaterArtifacts": true,
     "active": true,
     "targets": ["appimage", "deb", "rpm"],
     "icon": [

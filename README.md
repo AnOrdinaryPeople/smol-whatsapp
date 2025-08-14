@@ -6,7 +6,7 @@ A tiny wrapper for WhatsApp Web on Linux, built with Tauri.
 
 ## Features
 
-- Smol (~16.3 MB)
+- Smol `.deb` (~16 MB), chonkier AppImage
 - Notifications
 - System tray thingy
 

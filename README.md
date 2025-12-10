@@ -14,7 +14,6 @@ A tiny wrapper for WhatsApp Web on Linux, built with Tauri.
 
 - WhatsApp won't turn on notifications by itself, you gotta do it manually in the settings.
 - The official white icon is used to indicate unread status instead of messing with the logo (trademark stuff).
-- WhatsApp thinks this app is Safari instead of what's set in [`userAgent`](./src-tauri/tauri.conf.json#L15), probably 'cause of the WebKit engine.
 
 ## Roll Your Own
 

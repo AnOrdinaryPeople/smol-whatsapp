@@ -6,6 +6,7 @@ use tauri::{
     webview::PageLoadEvent,
     AppHandle, Builder, Listener, Manager, WindowEvent,
 };
+use tauri_plugin_notification::NotificationExt;
 
 struct AppTray(Mutex<TrayIcon>);
 
@@ -28,6 +29,7 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
+            let handle = app.handle().clone();
             let open_i = MenuItem::with_id(app, "open", "Open", true, None::<&str>)?;
             let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&open_i, &quit_i])?;
@@ -38,8 +40,26 @@ pub fn run() {
                 .build(app)?;
 
             app.manage(AppTray(Mutex::new(tray.clone())));
-            app.listen("notif", move |_event| {
+            app.listen("notif", move |event| {
                 tray.set_icon(unread_icon.clone()).unwrap();
+
+                if let Ok(payload) = serde_json::from_str::<serde_json::Value>(event.payload()) {
+                    let mut builder = handle
+                        .notification()
+                        .builder()
+                        .title(payload["title"].as_str().unwrap())
+                        .sound("message-new-instant");
+
+                    if let Some(body) = payload["body"].as_str() {
+                        builder = builder.body(body);
+                    }
+
+                    if let Some(icon) = payload["icon"].as_str() {
+                        builder = builder.icon(icon);
+                    }
+
+                    let _ = builder.show();
+                }
             });
 
             Ok(())
@@ -49,12 +69,21 @@ pub fn run() {
             {
                 let _ = window.eval(
                     r#"
-                    const NativeNotification = window.Notification;
-                    window.Notification = function(title, options) {
-                        window.__TAURI__.event.emit('notif', null);
-                        return new NativeNotification(title, options);
+                    window.Notification = function (title, options) {
+                        window.__TAURI__.event.emit('notif', { title, ...options });
+                        return {
+                            close: () => {},
+                            onclick: null,
+                            onshow: null,
+                            onerror: null,
+                            onclose: null,
+                            title,
+                            ...options,
+                            permission: 'granted',
+                        };
                     };
-                    window.Notification.prototype = NativeNotification.prototype;
+                    window.Notification.permission = 'granted';
+                    window.Notification.requestPermission = () => Promise.resolve('granted');
                     "#,
                 );
             }

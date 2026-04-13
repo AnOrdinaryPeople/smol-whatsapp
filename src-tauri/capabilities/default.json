@@ -13,7 +13,6 @@
   "permissions": [
     "core:default",
     "opener:default",
-    "notification:default",
-    "clipboard-manager:default"
+    "notification:default"
   ]
 }

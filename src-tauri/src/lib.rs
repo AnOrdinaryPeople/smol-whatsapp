@@ -88,7 +88,7 @@ pub fn run() {
                     const nativeEventListener = EventTarget.prototype.addEventListener;
                     EventTarget.prototype.addEventListener = function (type, listener, options) {
                         return nativeEventListener.call(this, type, type !== 'paste' ? listener : async function (event) {
-                            if (!(event.clipboardData?.items && [...event.clipboardData.items].some((item) => item.type.startsWith('image/')))) {
+                            if (event.clipboardData && event.clipboardData.items.length === 0 && event.clipboardData.types.length === 0 && event.clipboardData.files.length === 0) {
                                 try {
                                     const img = await window.__TAURI__.clipboardManager.readImage();
                                     const rgba = await img.rgba();

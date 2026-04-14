@@ -28,6 +28,7 @@ pub fn run() {
         }))
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_clipboard_manager::init())
         .setup(|app| {
             let handle = app.handle().clone();
             let open_i = MenuItem::with_id(app, "open", "Open", true, None::<&str>)?;
@@ -84,6 +85,42 @@ pub fn run() {
                     };
                     window.Notification.permission = 'granted';
                     window.Notification.requestPermission = () => Promise.resolve('granted');
+                    const nativeEventListener = EventTarget.prototype.addEventListener;
+                    EventTarget.prototype.addEventListener = function (type, listener, options) {
+                        return nativeEventListener.call(this, type, type !== 'paste' ? listener : async function (event) {
+                            if (!(event.clipboardData?.items && [...event.clipboardData.items].some((item) => item.type.startsWith('image/')))) {
+                                try {
+                                    const img = await window.__TAURI__.clipboardManager.readImage();
+                                    const rgba = await img.rgba();
+                                    const { width, height } = await img.size();
+                                    const canvas = new OffscreenCanvas(width, height);
+                                    canvas.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(rgba), width, height), 0, 0);
+                                    const blob = await canvas.convertToBlob({ type: 'image/png' });
+                                    Object.defineProperty(event.clipboardData, 'items', {
+                                        get: () => Object.assign(
+                                            {
+                                                0: {
+                                                    kind: 'file',
+                                                    type: 'image/png',
+                                                    getAsFile: () => new File([blob], 'image.png', { type: 'image/png' }),
+                                                    getAsString: (_) => {},
+                                                    webkitGetAsEntry: () => null,
+                                                },
+                                            },
+                                            {
+                                                length: 1,
+                                                [Symbol.iterator]: function* () {
+                                                    for (let i = 0; i < this.length; i++) yield this[i];
+                                                },
+                                            },
+                                        ),
+                                        configurable: true,
+                                    });
+                                } catch {}
+                            }
+                            return listener.call(this, event);
+                        }, options);
+                    };
                     "#,
                 );
             }
